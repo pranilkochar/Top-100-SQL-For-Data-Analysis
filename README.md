@@ -296,7 +296,286 @@ FROM employees;
 
 ---
 
-*(More questions to follow in subsequent updates)*
+### 11. How do you calculate the median in SQL?
+**Answer:**  
+Calculating the median involves finding the middle value in a sorted list of numbers. This can be done using window functions like the `PERCENTILE_CONT` function in databases that support it.
+
+**Input Data (`employees` table):**
+| name | salary |
+| :--- | :--- |
+| Alice | 40000 |
+| Bob | 50000 |
+| Charlie| 60000 |
+| David | 80000 |
+| Eve | 100000 |
+
+**SQL Query:**
+```sql
+-- Example of calculating the median using PERCENTILE_CONT
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) AS median_salary
+FROM employees;
+```
+
+**Output:**
+| median_salary |
+| :--- |
+| 60000 |
+
+---
+
+### 12. How do you perform a self-join in SQL?
+**Answer:**  
+A self-join is a regular join in which a table is joined with itself. It is extremely useful for querying hierarchical data, such as finding the manager for each employee within the same table.
+
+**Input Data (`employees` table):**
+| id | name | manager_id |
+| :--- | :--- | :--- |
+| 1 | Sarah (CEO) | NULL |
+| 2 | John (Manager)| 1 |
+| 3 | Mike (Analyst)| 2 |
+
+**SQL Query:**
+```sql
+-- Example of a self-join to find an employee's manager
+SELECT e1.name AS employee_name, e2.name AS manager_name
+FROM employees e1
+JOIN employees e2 ON e1.manager_id = e2.id;
+```
+
+**Output:**
+| employee_name | manager_name |
+| :--- | :--- |
+| John (Manager)| Sarah (CEO) |
+| Mike (Analyst)| John (Manager)|
+
+---
+
+### 13. How do you create a stored procedure in SQL?
+**Answer:**  
+A stored procedure is a precompiled collection of one or more SQL statements stored in the database. It allows you to reuse complex query logic simply by "calling" the procedure.
+
+**Input Data (`employees` table):**
+| id | name | department |
+| :--- | :--- | :--- |
+| 101 | Anna | Sales |
+| 102 | Mark | HR |
+
+**SQL Query:**
+```sql
+-- 1. Create the stored procedure
+CREATE PROCEDURE GetEmployeeDetails
+AS
+BEGIN
+    SELECT * FROM employees;
+END;
+
+-- 2. Execute the procedure
+EXEC GetEmployeeDetails;
+```
+
+**Output:**
+| id | name | department |
+| :--- | :--- | :--- |
+| 101 | Anna | Sales |
+| 102 | Mark | HR |
+
+---
+
+### 14. How do you create a trigger in SQL?
+**Answer:**  
+A trigger is a special type of stored procedure that automatically executes (or "fires") in response to specific events on a particular table, such as an `INSERT`, `UPDATE`, or `DELETE`.
+
+**Input Data:**
+A new employee record is being inserted into the database.
+
+**SQL Query:**
+```sql
+-- Example of creating a trigger
+CREATE TRIGGER trgAfterInsert ON employees
+FOR INSERT
+AS
+BEGIN
+    PRINT 'New employee record inserted successfully.';
+END;
+
+-- Inserting a record to fire the trigger
+INSERT INTO employees (id, name, department) VALUES (103, 'Luke', 'IT');
+```
+
+**Output:**
+```text
+New employee record inserted successfully.
+(1 row affected)
+```
+
+---
+
+### 15. How do you create a materialized view in SQL?
+**Answer:**  
+Unlike a standard view, a materialized view physically stores the result of a query. It is used to drastically improve query performance by precomputing complex joins or aggregations, though it needs to be refreshed to show new data.
+
+**Input Data:**
+`employees` table and `departments` table.
+
+**SQL Query:**
+```sql
+-- Example of creating a materialized view
+CREATE MATERIALIZED VIEW emp_dept_view AS
+SELECT e.name, d.name AS department_name
+FROM employees e
+JOIN departments d ON e.department_id = d.id;
+
+-- Querying the newly created physical view
+SELECT * FROM emp_dept_view;
+```
+
+**Output:**
+| name | department_name |
+| :--- | :--- |
+| Anna | Sales |
+| Mark | Human Resources |
+
+---
+
+### 16. How do you refresh a materialized view in SQL?
+**Answer:**  
+Because a materialized view stores a physical snapshot of the data, it must be refreshed to reflect any recent changes made to the underlying base tables.
+
+**Input Data (`employees` table):**
+Anna is transferred from Sales to Marketing in the base tables, but the `emp_dept_view` still shows her in Sales.
+
+**SQL Query:**
+```sql
+-- Example of refreshing a materialized view (PostgreSQL syntax)
+REFRESH MATERIALIZED VIEW emp_dept_view;
+
+-- Querying the view after refresh
+SELECT * FROM emp_dept_view;
+```
+
+**Output:**
+| name | department_name |
+| :--- | :--- |
+| Anna | Marketing |
+| Mark | Human Resources |
+
+---
+
+### 17. How do you use the OVER() clause in SQL?
+**Answer:**  
+The `OVER()` clause dictates exactly how window functions should partition and order rows. It allows you to perform calculations across a specific set of table rows related to the current row, without collapsing the output like `GROUP BY` does.
+
+**Input Data (`employees` table):**
+| name | department | salary |
+| :--- | :--- | :--- |
+| Paul | IT | 60000 |
+| Emma | IT | 70000 |
+| Liam | HR | 55000 |
+
+**SQL Query:**
+```sql
+-- Example of using OVER() to sequence rows within departments
+SELECT name, department, salary,
+       ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS row_num
+FROM employees;
+```
+
+**Output:**
+| name | department | salary | row_num |
+| :--- | :--- | :--- | :--- |
+| Emma | IT | 70000 | 1 |
+| Paul | IT | 60000 | 2 |
+| Liam | HR | 55000 | 1 |
+
+---
+
+### 18. How do you calculate a cumulative sum in SQL?
+**Answer:**  
+A cumulative sum calculates a running total by adding each value in a column to the sum of all preceding values. 
+
+**Input Data (`daily_sales` table):**
+| date | revenue |
+| :--- | :--- |
+| 2026-06-01 | 200 |
+| 2026-06-02 | 300 |
+| 2026-06-03 | 150 |
+
+**SQL Query:**
+```sql
+-- Example of calculating a cumulative sum
+SELECT date, revenue,
+       SUM(revenue) OVER (ORDER BY date) AS cumulative_revenue
+FROM daily_sales;
+```
+
+**Output:**
+| date | revenue | cumulative_revenue |
+| :--- | :--- | :--- |
+| 2026-06-01 | 200 | 200 |
+| 2026-06-02 | 300 | 500 |
+| 2026-06-03 | 150 | 650 |
+
+---
+
+### 19. How do you calculate a running total partitioned by a category?
+**Answer:**  
+A partitioned running total is similar to a cumulative sum, but the total resets whenever the specified category changes. This is achieved using `PARTITION BY` alongside the `OVER()` clause.
+
+**Input Data (`sales` table):**
+| date | category | value |
+| :--- | :--- | :--- |
+| 2026-06-01 | Hardware | 100 |
+| 2026-06-02 | Hardware | 200 |
+| 2026-06-01 | Software | 50 |
+| 2026-06-02 | Software | 50 |
+
+**SQL Query:**
+```sql
+-- Example of calculating a running total partitioned by category
+SELECT date, category, value,
+       SUM(value) OVER (PARTITION BY category ORDER BY date) AS running_total
+FROM sales;
+```
+
+**Output:**
+| date | category | value | running_total |
+| :--- | :--- | :--- | :--- |
+| 2026-06-01 | Hardware | 100 | 100 |
+| 2026-06-02 | Hardware | 200 | 300 |
+| 2026-06-01 | Software | 50 | 50 |
+| 2026-06-02 | Software | 50 | 100 |
+
+---
+
+### 20. How do you perform conditional aggregation in SQL?
+**Answer:**  
+Conditional aggregation uses aggregate functions (like `SUM` or `COUNT`) combined with `CASE` statements to perform logic on specific segments of data in a single pass.
+
+**Input Data (`employees` table):**
+| department | gender | salary |
+| :--- | :--- | :--- |
+| IT | Male | 80000 |
+| IT | Female | 90000 |
+| HR | Female | 60000 |
+| HR | Male | 55000 |
+
+**SQL Query:**
+```sql
+-- Example of summing salary based on a condition
+SELECT department,
+       SUM(CASE WHEN gender = 'Male' THEN salary ELSE 0 END) AS male_salary,
+       SUM(CASE WHEN gender = 'Female' THEN salary ELSE 0 END) AS female_salary
+FROM employees
+GROUP BY department;
+```
+
+**Output:**
+| department | male_salary | female_salary |
+| :--- | :--- | :--- |
+| IT | 80000 | 90000 |
+| HR | 55000 | 60000 |
+
+---
 
 ---
 
