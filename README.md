@@ -576,6 +576,823 @@ GROUP BY department;
 | HR | 55000 | 60000 |
 
 ---
+### 21. How do you perform a full outer join in SQL?
+**Answer:**  
+A full outer join returns all rows when there is a match in either the left or the right table. If there is no match on one side, it returns `NULL` for the columns from that side.
+
+**Input Data (`employees` and `departments` tables):**
+*Employees:*
+| name | department_id |
+| :--- | :--- |
+| John | 1 |
+| Jane | NULL |
+
+*Departments:*
+| id | name |
+| :--- | :--- |
+| 1 | HR |
+| 2 | IT |
+
+**SQL Query:**
+```sql
+-- Example of full outer join
+SELECT e.name, d.name AS department_name
+FROM employees e
+FULL OUTER JOIN departments d ON e.department_id = d.id;
+```
+
+**Output:**
+| name | department_name |
+| :--- | :--- |
+| John | HR |
+| Jane | NULL |
+| NULL | IT |
+
+---
+
+### 22. How do you handle NULL values in conditional logic in SQL?
+**Answer:**  
+When working with conditional logic like `CASE` statements or `WHERE` clauses, it is crucial to remember that `NULL` is not equal to anything, not even itself. You must use operators like `IS NULL` or functions like `COALESCE` to handle them properly.
+
+**Input Data (`employees` table):**
+| name | commission |
+| :--- | :--- |
+| Bob | 500 |
+| Sam | NULL |
+
+**SQL Query:**
+```sql
+-- Example of handling NULL values in conditional logic
+SELECT name,
+       CASE 
+           WHEN commission IS NULL THEN 'No Commission'
+           ELSE 'Receives Commission'
+       END AS commission_status
+FROM employees;
+```
+
+**Output:**
+| name | commission_status |
+| :--- | :--- |
+| Bob | Receives Commission |
+| Sam | No Commission |
+
+---
+
+### 23. How do you remove duplicates based on specific columns in SQL?
+**Answer:**  
+To remove duplicates based on *specific* columns rather than the entire row, you can use the `ROW_NUMBER()` window function to partition the data by those specific columns, order them to keep the "best" record, and filter out the rest.
+
+**Input Data (`customer_logins` table):**
+| customer_id | login_time | ip_address |
+| :--- | :--- | :--- |
+| 101 | 08:00 AM | 192.168.1.1 |
+| 101 | 09:00 AM | 192.168.1.5 |
+| 102 | 10:00 AM | 192.168.1.1 |
+
+**SQL Query:**
+```sql
+-- Example of keeping only the most recent login per customer
+WITH RankedLogins AS (
+    SELECT customer_id, login_time, ip_address,
+           ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY login_time DESC) as rn
+    FROM customer_logins
+)
+SELECT customer_id, login_time, ip_address
+FROM RankedLogins
+WHERE rn = 1;
+```
+
+**Output:**
+| customer_id | login_time | ip_address |
+| :--- | :--- | :--- |
+| 101 | 09:00 AM | 192.168.1.5 |
+| 102 | 10:00 AM | 192.168.1.1 |
+
+---
+
+### 24. How do you create a temporary table in SQL?
+**Answer:**  
+A temporary table is a table that exists only for the duration of a database session or transaction. They are extremely useful for storing intermediate results during complex data transformations.
+
+**Input Data (`employees` table):**
+| id | name | department |
+| :--- | :--- | :--- |
+| 1 | Leo | Sales |
+| 2 | Mia | IT |
+
+**SQL Query:**
+```sql
+-- Example of creating a temporary table
+CREATE TEMPORARY TABLE temp_sales_employees AS
+SELECT * FROM employees WHERE department = 'Sales';
+
+-- Querying the temporary table
+SELECT * FROM temp_sales_employees;
+```
+
+**Output:**
+| id | name | department |
+| :--- | :--- | :--- |
+| 1 | Leo | Sales |
+
+---
+
+### 25. How do you use the GROUP BY clause in SQL?
+**Answer:**  
+The `GROUP BY` clause groups rows that have identical values in specified columns into summary rows. It is essential when using aggregate functions (like `COUNT`, `MAX`, `MIN`, `SUM`, `AVG`) to perform calculations on each individual group.
+
+**Input Data (`sales` table):**
+| region | revenue |
+| :--- | :--- |
+| North | 100 |
+| North | 150 |
+| South | 200 |
+
+**SQL Query:**
+```sql
+-- Example of using GROUP BY to find total revenue per region
+SELECT region, SUM(revenue) AS total_revenue
+FROM sales
+GROUP BY region;
+```
+
+**Output:**
+| region | total_revenue |
+| :--- | :--- |
+| North | 250 |
+| South | 200 |
+
+---
+
+### 26. What is the difference between WHERE and HAVING clauses in SQL?
+**Answer:**  
+The `WHERE` clause filters individual rows *before* they are grouped. The `HAVING` clause filters summary groups *after* the `GROUP BY` operation has been performed.
+
+**Input Data (`sales` table):**
+| region | revenue |
+| :--- | :--- |
+| North | 100 |
+| North | 150 |
+| South | 50 |
+
+**SQL Query:**
+```sql
+-- Example: We only want regions whose TOTAL revenue is greater than 100
+SELECT region, SUM(revenue) AS total_revenue
+FROM sales
+GROUP BY region
+HAVING SUM(revenue) > 100;
+```
+
+**Output:**
+| region | total_revenue |
+| :--- | :--- |
+| North | 250 |
+
+---
+
+### 27. How do you find the second highest value in a column?
+**Answer:**  
+Finding the second highest value (like salary) is a classic interview question. It can be solved using window functions like `DENSE_RANK()`, or by using a subquery combined with the `MAX()` function.
+
+**Input Data (`employees` table):**
+| name | salary |
+| :--- | :--- |
+| Tom | 80000 |
+| Dan | 90000 |
+| Sue | 90000 |
+| Ben | 70000 |
+
+**SQL Query:**
+```sql
+-- Example using DENSE_RANK() to handle ties correctly
+WITH RankedSalaries AS (
+    SELECT name, salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) as rank
+    FROM employees
+)
+SELECT name, salary
+FROM RankedSalaries
+WHERE rank = 2;
+```
+
+**Output:**
+| name | salary |
+| :--- | :--- |
+| Tom | 80000 |
+
+---
+
+### 28. How do you use the CASE statement in SQL?
+**Answer:**  
+The `CASE` statement creates conditional, "if-then-else" logic directly within your SQL queries. It allows you to transform or categorize data on the fly.
+
+**Input Data (`employees` table):**
+| name | salary |
+| :--- | :--- |
+| Ann | 60000 |
+| Bob | 40000 |
+| Cam | 25000 |
+
+**SQL Query:**
+```sql
+-- Example of categorizing salary levels using CASE
+SELECT name, salary,
+       CASE
+           WHEN salary > 50000 THEN 'High'
+           WHEN salary BETWEEN 30000 AND 50000 THEN 'Medium'
+           ELSE 'Low'
+       END AS salary_level
+FROM employees;
+```
+
+**Output:**
+| name | salary | salary_level |
+| :--- | :--- | :--- |
+| Ann | 60000 | High |
+| Bob | 40000 | Medium |
+| Cam | 25000 | Low |
+
+---
+
+### 29. How do you calculate the exact difference between two dates in SQL?
+**Answer:**  
+Calculating date differences varies slightly by SQL dialect, but most modern databases use a variation of the `DATEDIFF` function or allow direct subtraction of date data types.
+
+**Input Data:** 
+Two dates: `2026-06-01` and `2026-06-15`.
+
+**SQL Query:**
+```sql
+-- Example of calculating date difference in days (SQL Server syntax)
+SELECT DATEDIFF(day, '2026-06-01', '2026-06-15') AS days_diff;
+
+-- Example of calculating date difference in days (PostgreSQL syntax)
+-- SELECT '2026-06-15'::date - '2026-06-01'::date AS days_diff;
+```
+
+**Output:**
+| days_diff |
+| :--- |
+| 14 |
+
+---
+
+### 30. How do you use the UNION operator in SQL?
+**Answer:**  
+The `UNION` operator combines the result sets of two or more `SELECT` queries into a single column. Crucially, `UNION` automatically removes duplicate rows between the result sets. (To keep duplicates, you must use `UNION ALL`).
+
+**Input Data (`employees` and `contractors` tables):**
+*Employees:*
+| name |
+| :--- |
+| John |
+| Mary |
+
+*Contractors:*
+| name |
+| :--- |
+| John |
+| Pete |
+
+**SQL Query:**
+```sql
+-- Example of combining lists using UNION
+SELECT name FROM employees
+UNION
+SELECT name FROM contractors;
+```
+
+**Output:**
+| name |
+| :--- |
+| John |
+| Mary |
+| Pete |
+
+---
+
+### 31. How do you use the UNION ALL operator in SQL?
+**Answer:**  
+The `UNION ALL` operator is used to combine the result sets of two or more `SELECT` queries. Unlike `UNION`, `UNION ALL` does *not* remove duplicate rows, making it faster to execute when you know your data doesn't have duplicates or when you explicitly want to see every record.
+
+**Input Data (`employees` and `contractors` tables):**
+*Employees:*
+| name |
+| :--- |
+| John |
+| Mary |
+
+*Contractors:*
+| name |
+| :--- |
+| John |
+| Pete |
+
+**SQL Query:**
+```sql
+-- Example of combining lists using UNION ALL
+SELECT name FROM employees
+UNION ALL
+SELECT name FROM contractors;
+```
+
+**Output:**
+| name |
+| :--- |
+| John |
+| Mary |
+| John |
+| Pete |
+
+---
+
+### 32. How do you use the INTERSECT operator in SQL?
+**Answer:**  
+The `INTERSECT` operator is used to return only the rows that appear in *both* result sets of two or more `SELECT` queries. 
+
+**Input Data (`employees` and `managers` tables):**
+*Employees:*
+| name |
+| :--- |
+| Alice |
+| Bob |
+| Charlie |
+
+*Managers:*
+| name |
+| :--- |
+| Alice |
+| Diana |
+
+**SQL Query:**
+```sql
+-- Example of INTERSECT to find employees who are also managers
+SELECT name FROM employees
+INTERSECT
+SELECT name FROM managers;
+```
+
+**Output:**
+| name |
+| :--- |
+| Alice |
+
+---
+
+### 33. How do you use the EXCEPT operator in SQL?
+**Answer:**  
+The `EXCEPT` operator (known as `MINUS` in Oracle) returns the rows from the first `SELECT` query that are *not* present in the second `SELECT` query. It effectively subtracts the second dataset from the first.
+
+**Input Data (`all_staff` and `managers` tables):**
+*All Staff:*
+| name |
+| :--- |
+| Alice |
+| Bob |
+| Charlie |
+
+*Managers:*
+| name |
+| :--- |
+| Alice |
+
+**SQL Query:**
+```sql
+-- Example of EXCEPT to find staff who are NOT managers
+SELECT name FROM all_staff
+EXCEPT
+SELECT name FROM managers;
+```
+
+**Output:**
+| name |
+| :--- |
+| Bob |
+| Charlie |
+
+---
+
+### 34. How do you use the EXISTS operator in SQL?
+**Answer:**  
+The `EXISTS` operator tests for the existence of any rows in a subquery. It returns `TRUE` the moment it finds at least one matching row, making it highly efficient for checking conditions without returning massive amounts of data.
+
+**Input Data (`departments` and `employees` tables):**
+*Departments:*
+| id | name |
+| :--- | :--- |
+| 1 | HR |
+| 2 | IT |
+| 3 | Legal |
+
+*Employees:*
+| name | dept_id |
+| :--- | :--- |
+| John | 1 |
+| Jane | 2 |
+
+**SQL Query:**
+```sql
+-- Example of finding departments that actually have employees
+SELECT name
+FROM departments d
+WHERE EXISTS (
+    SELECT 1
+    FROM employees e
+    WHERE e.dept_id = d.id
+);
+```
+
+**Output:**
+| name |
+| :--- |
+| HR |
+| IT |
+
+---
+
+### 35. How do you use the IN operator in SQL?
+**Answer:**  
+The `IN` operator is a shorthand for multiple `OR` conditions. It allows you to specify a list of specific values you want to filter for within a `WHERE` clause.
+
+**Input Data (`employees` table):**
+| name | department |
+| :--- | :--- |
+| Alice | HR |
+| Bob | IT |
+| Charlie | Sales |
+| Dave | Marketing |
+
+**SQL Query:**
+```sql
+-- Example of IN
+SELECT name, department
+FROM employees
+WHERE department IN ('HR', 'Sales', 'IT');
+```
+
+**Output:**
+| name | department |
+| :--- | :--- |
+| Alice | HR |
+| Bob | IT |
+| Charlie | Sales |
+
+---
+
+### 36. How do you use the BETWEEN operator in SQL?
+**Answer:**  
+The `BETWEEN` operator filters rows based on a specified continuous range of values (numbers, text, or dates). It is inclusive, meaning it includes both the start and end values.
+
+**Input Data (`employees` table):**
+| name | salary |
+| :--- | :--- |
+| Ann | 25000 |
+| Bob | 40000 |
+| Cam | 45000 |
+| Dan | 60000 |
+
+**SQL Query:**
+```sql
+-- Example of BETWEEN
+SELECT name, salary
+FROM employees
+WHERE salary BETWEEN 30000 AND 50000;
+```
+
+**Output:**
+| name | salary |
+| :--- | :--- |
+| Bob | 40000 |
+| Cam | 45000 |
+
+---
+
+### 37. How do you use the LIKE operator in SQL?
+**Answer:**  
+The `LIKE` operator is used to search for a specified pattern within a text column. It is almost always used with wildcards: `%` (represents zero or more characters) and `_` (represents a single character).
+
+**Input Data (`employees` table):**
+| name |
+| :--- |
+| John |
+| Jane |
+| Jack |
+| Bob |
+
+**SQL Query:**
+```sql
+-- Example of finding names that start with 'J'
+SELECT name
+FROM employees
+WHERE name LIKE 'J%';
+```
+
+**Output:**
+| name |
+| :--- |
+| John |
+| Jane |
+| Jack |
+
+---
+
+### 38. How do you use the CONCAT function in SQL?
+**Answer:**  
+The `CONCAT` function takes two or more strings and merges them into a single string. This is heavily used for formatting names, addresses, or generating clean reports.
+
+**Input Data (`employees` table):**
+| first_name | last_name |
+| :--- | :--- |
+| John | Doe |
+| Jane | Smith |
+
+**SQL Query:**
+```sql
+-- Example of combining first and last names with a space in between
+SELECT CONCAT(first_name, ' ', last_name) AS full_name
+FROM employees;
+```
+
+**Output:**
+| full_name |
+| :--- |
+| John Doe |
+| Jane Smith |
+
+---
+
+### 39. How do you create an index in SQL?
+**Answer:**  
+An index acts like the table of contents in a book. It is created on a column (or columns) to drastically speed up data retrieval operations (`SELECT` queries), though it slightly slows down data modification (`INSERT`, `UPDATE`, `DELETE`) because the index must be maintained.
+
+**Scenario:** Searching for an employee's name in a massive company database.
+
+**SQL Query:**
+```sql
+-- Example of creating a standard index
+CREATE INDEX idx_employee_name ON employees(name);
+
+-- Subsequent searches will now use the index for faster lookups
+SELECT * FROM employees WHERE name = 'John Doe';
+```
+
+**Output:**  
+*Behind the scenes, the database reads the index pointer directly to the row's physical location instead of scanning the entire table top-to-bottom.*
+
+---
+
+### 40. How do you create a unique index in SQL?
+**Answer:**  
+A unique index serves two purposes: it speeds up data retrieval just like a regular index, but it also enforces a strict rule that duplicate values cannot be entered into that column. It is excellent for protecting data integrity.
+
+**Scenario:** Ensuring no two employees can be registered with the exact same email address.
+
+**SQL Query:**
+```sql
+-- Example of creating a unique index
+CREATE UNIQUE INDEX idx_employee_email ON employees(email);
+
+-- Attempting to insert a duplicate email will now throw a database error
+```
+
+**Output:**
+*Any subsequent `INSERT` or `UPDATE` statement that tries to put an existing email address into the `email` column will be rejected by the database.*
+
+---
+
+### 41. How do you create a composite index in SQL?
+**Answer:**  
+A composite index is an index placed on two or more columns of a table. It is highly effective for optimizing queries that frequently filter, group, or sort data based on those specific multiple columns together.
+
+**Scenario:** An HR system frequently searches for employees by both their name and their department simultaneously.
+
+**SQL Query:**
+```sql
+-- Example of creating a composite index
+CREATE INDEX idx_name_department ON employees(name, department);
+
+-- This query will now use the composite index for lightning-fast retrieval
+SELECT * FROM employees WHERE name = 'Alice' AND department = 'IT';
+```
+
+**Output:**  
+*Behind the scenes, the database utilizes the multi-column index to instantly locate records matching both criteria, avoiding a full table scan.*
+
+---
+
+### 42. How do you create a full-text index in SQL?
+**Answer:**  
+A full-text index is a specialized index used to significantly speed up complex text searches (like looking for specific words or phrases) within large text fields, such as articles, descriptions, or resumes.
+
+**Scenario:** A recruitment platform needs to search thousands of long-form text resumes for specific programming languages.
+
+**SQL Query:**
+```sql
+-- Example of creating a full-text index (MySQL syntax)
+CREATE FULLTEXT INDEX idx_employee_resume ON employees(resume);
+
+-- Searching using the full-text index
+SELECT name FROM employees WHERE MATCH(resume) AGAINST('Python SQL');
+```
+
+**Output:**  
+*The database returns rows containing 'Python' or 'SQL' much faster than using a standard `LIKE '%Python%'` wildcard search, which forces a full table scan.*
+
+---
+
+### 43. How do you drop an index in SQL?
+**Answer:**  
+An index can be dropped (deleted) using the `DROP INDEX` statement. While indexes speed up read operations (`SELECT`), they slow down write operations (`INSERT`, `UPDATE`, `DELETE`). Dropping unused indexes reclaims storage space and improves write performance.
+
+**Input Data:**
+An existing index named `idx_employee_name` that is no longer being used by query plans.
+
+**SQL Query:**
+```sql
+-- Example of dropping an index (Syntax varies slightly by database)
+DROP INDEX idx_employee_name ON employees;
+```
+
+**Output:**  
+*The index structure is removed from the database storage. Subsequent searches on the `name` column will revert to scanning the entire table.*
+
+---
+
+### 44. How do you use the TRANSLATE function in SQL?
+**Answer:**  
+The `TRANSLATE` function replaces a sequence of characters in a string with another set of corresponding characters. It performs a one-to-one character substitution, which is great for data cleaning or simple obfuscation.
+
+**Input Data (`employees` table):**
+| name |
+| :--- |
+| Jane Doe |
+| Sam Smith |
+
+**SQL Query:**
+```sql
+-- Example: Replacing all vowels with numbers
+SELECT name, 
+       TRANSLATE(name, 'aeiou', '12345') AS translated_name
+FROM employees;
+```
+
+**Output:**
+| name | translated_name |
+| :--- | :--- |
+| Jane Doe | J1n2 D42 |
+| Sam Smith | S1m Sm3th |
+
+---
+
+### 45. How do you use the SUBSTRING function in SQL?
+**Answer:**  
+The `SUBSTRING` function extracts a specific portion of a string based on a starting position and a specified length. It is incredibly useful for parsing standardized data formats.
+
+**Input Data (`employees` table):**
+| phone_number |
+| :--- |
+| 555-123-4567 |
+| 415-987-6543 |
+
+**SQL Query:**
+```sql
+-- Example of extracting just the 3-digit area code (starts at position 1, length 3)
+SELECT phone_number, 
+       SUBSTRING(phone_number, 1, 3) AS area_code
+FROM employees;
+```
+
+**Output:**
+| phone_number | area_code |
+| :--- | :--- |
+| 555-123-4567 | 555 |
+| 415-987-6543 | 415 |
+
+---
+
+### 46. How do you use the REPLACE function in SQL?
+**Answer:**  
+Unlike `TRANSLATE` (which replaces individual characters), the `REPLACE` function replaces all occurrences of an entire specified substring within a string with a new substring.
+
+**Input Data (`departments` table):**
+| dept_name |
+| :--- |
+| Human Resources - North |
+| Human Resources - South |
+
+**SQL Query:**
+```sql
+-- Example of replacing a long phrase with an abbreviation
+SELECT dept_name, 
+       REPLACE(dept_name, 'Human Resources', 'HR') AS clean_dept
+FROM departments;
+```
+
+**Output:**
+| dept_name | clean_dept |
+| :--- | :--- |
+| Human Resources - North | HR - North |
+| Human Resources - South | HR - South |
+
+---
+
+### 47. How do you create a view in SQL?
+**Answer:**  
+A view is a "virtual table" generated by a saved SQL query. It does not store data itself; instead, it dynamically pulls data from underlying base tables whenever queried. Views simplify complex logic and can restrict user access to specific columns.
+
+**Input Data:** 
+A complex database with separate `employees` and `departments` tables.
+
+**SQL Query:**
+```sql
+-- Example of creating a view that hides complex JOIN logic
+CREATE VIEW employee_directory AS
+SELECT e.first_name, e.last_name, d.department_name
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.id;
+
+-- Now users can simply query the view like a normal table
+SELECT * FROM employee_directory;
+```
+
+**Output:**
+| first_name | last_name | department_name |
+| :--- | :--- | :--- |
+| John | Doe | IT |
+| Mary | Jane | HR |
+
+---
+
+### 48. How do you update data in a view in SQL?
+**Answer:**  
+You can update data directly through a view *only if* the view is "updatable." Generally, this means the view maps directly to a single base table without any aggregate functions (`SUM`, `AVG`), `GROUP BY` clauses, or complex joins.
+
+**Input Data:**
+An updatable view named `active_employees` pulling directly from the `employees` table.
+
+**SQL Query:**
+```sql
+-- Example of updating a base table through a view
+UPDATE active_employees
+SET status = 'On Leave'
+WHERE name = 'John Doe';
+```
+
+**Output:**  
+*The base `employees` table is updated. John Doe's status is permanently changed to 'On Leave' in the underlying database architecture.*
+
+---
+
+### 49. How do you delete data from a view in SQL?
+**Answer:**  
+Similar to updating, you can delete records through a view if it is an updatable, single-table view. Deleting from the view permanently removes the corresponding row from the underlying base table.
+
+**Input Data:**
+An updatable view named `contractors_view`.
+
+**SQL Query:**
+```sql
+-- Example of deleting a record through a view
+DELETE FROM contractors_view
+WHERE name = 'John Doe';
+```
+
+**Output:**  
+*The row belonging to John Doe is permanently deleted from the underlying base table that powers `contractors_view`.*
+
+---
+
+### 50. How do you create a sequence in SQL?
+**Answer:**  
+A sequence is a database object that automatically generates an incrementing list of unique numeric values. Sequences are most commonly used to automatically generate primary key IDs when inserting new records.
+
+**Input Data:**
+An empty `employees` table that needs unique IDs for new hires.
+
+**SQL Query:**
+```sql
+-- Example of creating a sequence (Oracle / PostgreSQL syntax)
+CREATE SEQUENCE emp_sequence
+START WITH 100
+INCREMENT BY 1;
+
+-- Using the sequence to automatically assign a new ID during an INSERT
+INSERT INTO employees (id, name, department)
+VALUES (NEXTVAL('emp_sequence'), 'John Doe', 'HR');
+
+INSERT INTO employees (id, name, department)
+VALUES (NEXTVAL('emp_sequence'), 'Jane Smith', 'IT');
+```
+
+**Output:**
+| id | name | department |
+| :--- | :--- | :--- |
+| 100 | John Doe | HR |
+| 101 | Jane Smith | IT |
+
+---
 
 ---
 
