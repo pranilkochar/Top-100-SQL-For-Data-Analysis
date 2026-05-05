@@ -1,6 +1,6 @@
-# 100 SQL Interview Questions for Data Analytics and Answers
+# Essential SQL Guide for Data Analytics
 
-Welcome to my Analytics World! This repository contains 100 essential SQL interview questions. To make learning easier, I have included sample **Input Data** and the expected **Output** for the queries so you can see exactly how the data transforms.
+This guide covers essential SQL concepts every data analyst should know, with sample input data and expected outputs. Whether you are learning SQL from scratch or looking for a quick reference, these practical examples will show you exactly how data transforms with each query.
 
 ---
 
@@ -296,14 +296,14 @@ FROM employees;
 
 ---
 
-*(Questions 11-100 to follow in subsequent updates)*
+*(More questions to follow in subsequent updates)*
 
 ---
 
 If you found this repository helpful, please give it a star!
 
 Follow me on:
-- [LinkedIn](https://www.linkedin.com/in/pranilkochar)
+- [LinkedIn](https://www.linkedin.com/in/pranil-k-45235858)
 - [GitHub](https://github.com/pranilkochar)
 
 Stay updated with my latest content and projects!
